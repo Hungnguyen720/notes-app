@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A simple browser-based notes app for creating, editing, and saving text notes locally."
+    />
+    <title>Notes</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="composer-panel" aria-labelledby="app-title">
+        <div class="brand-mark" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+
+        <div class="composer-copy">
+          <h1 id="app-title">Notes</h1>
+          <p>Capture a thought and keep it close. Everything stays in this browser.</p>
+        </div>
+
+        <form class="note-form" id="note-form" novalidate>
+          <label for="note-input">New note</label>
+          <textarea
+            id="note-input"
+            name="note"
+            rows="6"
+            maxlength="1000"
+            placeholder="What do you want to remember?"
+            aria-describedby="note-help note-error"
+            required
+          ></textarea>
+
+          <div class="form-meta">
+            <p id="note-help"><span id="character-count">0</span>/1000</p>
+            <p class="form-error" id="note-error" role="alert"></p>
+          </div>
+
+          <button class="primary-button" id="add-note-button" type="submit" disabled>
+            Add note
+          </button>
+        </form>
+
+        <p class="storage-note" id="storage-note">
+          <span class="storage-dot" aria-hidden="true"></span>
+          <span id="storage-label">Saved locally on this device</span>
+        </p>
+      </section>
+
+      <section class="notes-panel" aria-labelledby="notes-heading">
+        <header class="notes-header">
+          <div>
+            <h2 id="notes-heading">Your notes</h2>
+            <p id="notes-summary">Nothing here yet</p>
+          </div>
+        </header>
+
+        <div class="empty-state" id="empty-state">
+          <div class="empty-lines" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <h3>Start with one thought</h3>
+          <p>Your saved notes will collect here, ready whenever you return.</p>
+        </div>
+
+        <div class="notes-list" id="notes-list" aria-live="polite"></div>
+        <p class="visually-hidden" id="status-message" role="status" aria-live="polite"></p>
+      </section>
+    </main>
+  </body>
+</html>
