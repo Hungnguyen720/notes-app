@@ -62,6 +62,16 @@
           </div>
         </header>
 
+        <div class="search-field">
+          <label for="note-search">Search notes</label>
+          <input
+            id="note-search"
+            type="search"
+            placeholder="Search by note text"
+            autocomplete="off"
+          />
+        </div>
+
         <div class="empty-state" id="empty-state">
           <div class="empty-lines" aria-hidden="true">
             <span></span>
@@ -70,6 +80,11 @@
           </div>
           <h3>Start with one thought</h3>
           <p>Your saved notes will collect here, ready whenever you return.</p>
+        </div>
+
+        <div class="empty-state no-matches-state" id="no-matches-state" hidden>
+          <h3>No matching notes</h3>
+          <p>Try a different search or clear the search to see every note.</p>
         </div>
 
         <div class="notes-list" id="notes-list" aria-live="polite"></div>

@@ -38,6 +38,7 @@ body {
 }
 
 button,
+input,
 textarea {
   font: inherit;
 }
@@ -47,6 +48,7 @@ button {
 }
 
 button:focus-visible,
+input:focus-visible,
 textarea:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 2px;
@@ -284,6 +286,43 @@ textarea:focus-visible {
   font-size: 0.9rem;
 }
 
+.search-field {
+  margin-bottom: 1.35rem;
+}
+
+.search-field label {
+  display: block;
+  margin-bottom: 0.55rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.search-field input {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #c7d1df;
+  border-radius: 12px;
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: 0 8px 22px rgba(31, 52, 84, 0.06);
+}
+
+.search-field input::placeholder {
+  color: #64748b;
+}
+
+.search-field input:hover {
+  border-color: #98a9c0;
+}
+
+.search-field input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 8px 24px rgba(36, 87, 214, 0.12);
+}
+
 .notes-list {
   display: grid;
   gap: 1rem;
@@ -402,6 +441,10 @@ textarea:focus-visible {
 
 .empty-state[hidden] {
   display: none;
+}
+
+.no-matches-state {
+  padding-block: clamp(2.5rem, 7vw, 4.5rem);
 }
 
 .empty-lines {
