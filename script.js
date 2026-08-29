@@ -1,22 +1,42 @@
+// @ts-check
+
 (() => {
   "use strict";
+
+  /**
+   * @typedef {object} Note
+   * @property {string} id
+   * @property {string} text
+   * @property {number} createdAt
+   * @property {number} updatedAt
+   */
+
+  /** @typedef {{ focusEdit?: boolean }} RenderOptions */
 
   const STORAGE_KEY = "notes-app.notes.v1";
   const MAX_NOTE_LENGTH = 1000;
 
-  const form = document.querySelector("#note-form");
-  const input = document.querySelector("#note-input");
-  const addButton = document.querySelector("#add-note-button");
-  const characterCount = document.querySelector("#character-count");
-  const formError = document.querySelector("#note-error");
-  const notesList = document.querySelector("#notes-list");
-  const emptyState = document.querySelector("#empty-state");
-  const notesSummary = document.querySelector("#notes-summary");
-  const statusMessage = document.querySelector("#status-message");
-  const storageNote = document.querySelector("#storage-note");
-  const storageLabel = document.querySelector("#storage-label");
+  const form = /** @type {HTMLFormElement} */ (document.querySelector("#note-form"));
+  const input = /** @type {HTMLTextAreaElement} */ (document.querySelector("#note-input"));
+  const addButton = /** @type {HTMLButtonElement} */ (
+    document.querySelector("#add-note-button")
+  );
+  const characterCount = /** @type {HTMLElement} */ (
+    document.querySelector("#character-count")
+  );
+  const formError = /** @type {HTMLElement} */ (document.querySelector("#note-error"));
+  const notesList = /** @type {HTMLElement} */ (document.querySelector("#notes-list"));
+  const emptyState = /** @type {HTMLElement} */ (document.querySelector("#empty-state"));
+  const notesSummary = /** @type {HTMLElement} */ (document.querySelector("#notes-summary"));
+  const statusMessage = /** @type {HTMLElement} */ (
+    document.querySelector("#status-message")
+  );
+  const storageNote = /** @type {HTMLElement} */ (document.querySelector("#storage-note"));
+  const storageLabel = /** @type {HTMLElement} */ (document.querySelector("#storage-label"));
 
+  /** @type {Note[]} */
   let notes = loadNotes();
+  /** @type {string | null} */
   let editingNoteId = null;
 
   function createId() {
@@ -27,22 +47,30 @@
     return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   }
 
+  /**
+   * @param {unknown} value
+   * @returns {value is Note}
+   */
   function isStoredNote(value) {
+    if (value === null || typeof value !== "object") return false;
+
+    const note = /** @type {Record<string, unknown>} */ (value);
     return (
-      value !== null &&
-      typeof value === "object" &&
-      typeof value.id === "string" &&
-      typeof value.text === "string" &&
-      value.text.trim().length > 0 &&
-      value.text.length <= MAX_NOTE_LENGTH &&
-      /^[A-Za-z0-9_-]+$/.test(value.id) &&
-      Number.isFinite(value.createdAt) &&
-      Number.isFinite(value.updatedAt) &&
-      !Number.isNaN(new Date(value.createdAt).getTime()) &&
-      !Number.isNaN(new Date(value.updatedAt).getTime())
+      typeof note.id === "string" &&
+      typeof note.text === "string" &&
+      note.text.trim().length > 0 &&
+      note.text.length <= MAX_NOTE_LENGTH &&
+      /^[A-Za-z0-9_-]+$/.test(note.id) &&
+      typeof note.createdAt === "number" &&
+      typeof note.updatedAt === "number" &&
+      Number.isFinite(note.createdAt) &&
+      Number.isFinite(note.updatedAt) &&
+      !Number.isNaN(new Date(note.createdAt).getTime()) &&
+      !Number.isNaN(new Date(note.updatedAt).getTime())
     );
   }
 
+  /** @param {boolean} isAvailable */
   function setStorageAvailable(isAvailable) {
     storageNote.classList.toggle("is-unavailable", !isAvailable);
     storageLabel.textContent = isAvailable
@@ -50,6 +78,7 @@
       : "Browser storage is unavailable; changes may not persist";
   }
 
+  /** @returns {Note[]} */
   function loadNotes() {
     try {
       const savedValue = localStorage.getItem(STORAGE_KEY);
@@ -83,6 +112,7 @@
     }
   }
 
+  /** @param {string} message */
   function showStatus(message) {
     statusMessage.textContent = "";
     window.setTimeout(() => {
@@ -90,6 +120,7 @@
     }, 20);
   }
 
+  /** @param {number} timestamp */
   function formatDate(timestamp) {
     const date = new Date(timestamp);
     const today = new Date();
@@ -102,6 +133,12 @@
     }).format(date);
   }
 
+  /**
+   * @param {string} label
+   * @param {string} className
+   * @param {string} action
+   * @param {string} noteId
+   */
   function createButton(label, className, action, noteId) {
     const button = document.createElement("button");
     button.type = "button";
@@ -112,6 +149,7 @@
     return button;
   }
 
+  /** @param {Note} note */
   function renderNote(note) {
     const article = document.createElement("article");
     article.className = "note-card";
@@ -173,6 +211,7 @@
     return article;
   }
 
+  /** @param {RenderOptions} [options] */
   function renderNotes(options = {}) {
     notesList.replaceChildren(...notes.map(renderNote));
 
@@ -183,8 +222,11 @@
       : "Nothing here yet";
 
     if (editingNoteId) {
-      const editInput = Array.from(notesList.querySelectorAll("[data-edit-input]")).find(
-        (element) => element.dataset.editInput === editingNoteId,
+      const editInput = /** @type {HTMLTextAreaElement | undefined} */ (
+        Array.from(notesList.querySelectorAll("[data-edit-input]")).find(
+          (element) =>
+            /** @type {HTMLElement} */ (element).dataset.editInput === editingNoteId,
+        )
       );
       if (options.focusEdit && editInput) {
         editInput.focus();
@@ -195,7 +237,7 @@
 
   function updateComposerState() {
     const currentLength = input.value.length;
-    characterCount.textContent = currentLength;
+    characterCount.textContent = String(currentLength);
     addButton.disabled = input.value.trim().length === 0;
 
     if (input.value.trim().length > 0) {
@@ -231,6 +273,7 @@
     input.focus();
   }
 
+  /** @param {string} noteId */
   function beginEditing(noteId) {
     editingNoteId = noteId;
     renderNotes({ focusEdit: true });
@@ -242,13 +285,17 @@
     showStatus("Editing canceled.");
   }
 
+  /** @param {string} noteId */
   function saveEdit(noteId) {
-    const textarea = Array.from(notesList.querySelectorAll("[data-edit-input]")).find(
-      (element) => element.dataset.editInput === noteId,
+    const textarea = /** @type {HTMLTextAreaElement | undefined} */ (
+      Array.from(notesList.querySelectorAll("[data-edit-input]")).find(
+        (element) => /** @type {HTMLElement} */ (element).dataset.editInput === noteId,
+      )
     );
     if (!textarea) return;
 
-    const error = textarea.closest(".note-card").querySelector(".edit-error");
+    const card = /** @type {HTMLElement} */ (textarea.closest(".note-card"));
+    const error = /** @type {HTMLElement} */ (card.querySelector(".edit-error"));
     const text = textarea.value.trim();
 
     if (!text) {
@@ -267,6 +314,7 @@
     showStatus("Note updated.");
   }
 
+  /** @param {string} noteId */
   function deleteNote(noteId) {
     const noteIndex = notes.findIndex((note) => note.id === noteId);
     if (noteIndex === -1) return;
@@ -277,8 +325,10 @@
     renderNotes();
     showStatus("Note deleted.");
 
-    const nextFocusTarget = notesList.querySelector(
-      `.note-card:nth-child(${Math.min(noteIndex + 1, notes.length)}) .edit-button`,
+    const nextFocusTarget = /** @type {HTMLElement | null} */ (
+      notesList.querySelector(
+        `.note-card:nth-child(${Math.min(noteIndex + 1, notes.length)}) .edit-button`,
+      )
     );
     if (nextFocusTarget) nextFocusTarget.focus();
   }
@@ -291,10 +341,14 @@
   input.addEventListener("input", updateComposerState);
 
   notesList.addEventListener("click", (event) => {
-    const button = event.target.closest("button[data-action]");
+    const target = /** @type {Element | null} */ (event.target);
+    const button = /** @type {HTMLButtonElement | null} */ (
+      target?.closest("button[data-action]") ?? null
+    );
     if (!button) return;
 
     const { action, noteId } = button.dataset;
+    if (!noteId) return;
 
     if (action === "edit") beginEditing(noteId);
     if (action === "cancel") cancelEditing();
@@ -303,7 +357,10 @@
   });
 
   notesList.addEventListener("keydown", (event) => {
-    const textarea = event.target.closest(".edit-textarea");
+    const target = /** @type {Element | null} */ (event.target);
+    const textarea = /** @type {HTMLTextAreaElement | null} */ (
+      target?.closest(".edit-textarea") ?? null
+    );
     if (!textarea) return;
 
     if (event.key === "Escape") {
@@ -313,7 +370,8 @@
 
     if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
       event.preventDefault();
-      saveEdit(textarea.dataset.editInput);
+      const noteId = textarea.dataset.editInput;
+      if (noteId) saveEdit(noteId);
     }
   });
 
