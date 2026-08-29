@@ -37,4 +37,6 @@ The production application has no framework, backend, remote service, or product
 
 ## Pull requests
 
-Keep documentation-only pull requests focused: change only the documentation needed for the stated purpose, verify commands and architecture details against the repository, and avoid unrelated formatting or product changes. In the pull request, summarize what changed and why, list the checks run, and call out any follow-up work or known limitations.
+Keep pull requests focused on the requested change and include relevant tests when behavior changes. Preserve note creation, restoration, editing, and deletion, as well as compatibility with the `notes-app.notes.v1` storage format, unless the change explicitly requires otherwise. Avoid unrelated runtime, tooling, dependency, CI, or formatting changes.
+
+In the pull request, summarize what changed and why, list the checks run, and call out any follow-up work or known limitations.
