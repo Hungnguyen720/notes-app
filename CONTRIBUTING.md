@@ -1,36 +1,40 @@
 # Contributing
 
-## Local development
+This repository contains a dependency-free static Notes application for the browser. Use Node.js 22.14.0 and npm 10.9.2 for development.
 
-Local development uses Node.js 22.14.0 and npm 10.9.2. Select the pinned
-Node.js version, then install the committed dependency graph with the supported
-clean installation command:
+## Setup and verification
+
+Install the development tooling with:
 
 ```sh
-nvm use
 npm ci
 ```
 
-Notes is a dependency-free static browser application. Keep its existing
-architecture: `index.html` defines the structure, `styles.css` provides the
-presentation, and `script.js` implements browser behavior and `localStorage`
-persistence. Do not introduce a frontend framework, backend, production
-dependency, or remote service unless the change explicitly requires one.
-
-## Verification
-
-Before opening a pull request, run the required complete verification command:
+Run the complete verification suite before opening a pull request:
 
 ```sh
 npm run verify
 ```
 
+The individual checks are available when iterating:
+
+```sh
+npm run lint
+npm run typecheck
+npm run test
+npm run build
+```
+
+## Repository structure
+
+- `index.html` defines the application structure and accessible controls.
+- `styles.css` contains presentation and responsive layout rules.
+- `script.js` implements browser behavior and persists notes in `localStorage` under `notes-app.notes.v1`.
+- `test/` contains behavioral tests run with Node's built-in test runner and JSDOM.
+- `scripts/build.mjs` copies the static HTML, CSS, and JavaScript files into the generated `dist/` directory.
+
+The production application has no framework, backend, remote service, or production dependency.
+
 ## Pull requests
 
-- Keep each pull request focused on its stated purpose and document what changed.
-- Preserve existing Notes behavior and storage unless the change explicitly
-  requires otherwise.
-- Add or update behavioral tests when behavior changes. Documentation-only work
-  should not alter runtime files, dependencies, package scripts, or CI.
-- Include the verification performed and any known risks in the pull-request
-  description.
+Keep documentation-only pull requests focused: change only the documentation needed for the stated purpose, verify commands and architecture details against the repository, and avoid unrelated formatting or product changes. In the pull request, summarize what changed and why, list the checks run, and call out any follow-up work or known limitations.
