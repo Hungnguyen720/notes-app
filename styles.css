@@ -299,6 +299,12 @@ textarea:focus-visible {
   animation: note-arrival 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+.note-card.is-pinned {
+  box-shadow:
+    inset 4px 0 0 var(--accent),
+    var(--shadow);
+}
+
 .note-text {
   margin: 0;
   overflow-wrap: anywhere;
