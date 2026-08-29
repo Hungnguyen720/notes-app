@@ -4,12 +4,15 @@
   "use strict";
 
   /**
-   * @typedef {object} Note
+   * @typedef {object} StoredNote
    * @property {string} id
    * @property {string} text
    * @property {number} createdAt
    * @property {number} updatedAt
+   * @property {boolean} [pinned]
    */
+
+  /** @typedef {StoredNote & { pinned: boolean }} Note */
 
   /** @typedef {{ focusEdit?: boolean }} RenderOptions */
 
@@ -49,7 +52,7 @@
 
   /**
    * @param {unknown} value
-   * @returns {value is Note}
+   * @returns {value is StoredNote}
    */
   function isStoredNote(value) {
     if (value === null || typeof value !== "object") return false;
@@ -88,11 +91,16 @@
       if (!Array.isArray(parsedValue)) return [];
 
       const seenIds = new Set();
-      return parsedValue.filter((note) => {
-        if (!isStoredNote(note) || seenIds.has(note.id)) return false;
+      /** @type {Note[]} */
+      const validNotes = [];
+
+      for (const note of parsedValue) {
+        if (!isStoredNote(note) || seenIds.has(note.id)) continue;
         seenIds.add(note.id);
-        return true;
-      });
+        validNotes.push({ ...note, pinned: note.pinned === true });
+      }
+
+      return validNotes;
     } catch {
       setStorageAvailable(false);
       showStatus("Saved notes could not be loaded in this browser.");
@@ -154,6 +162,8 @@
     const article = document.createElement("article");
     article.className = "note-card";
     article.dataset.noteId = note.id;
+    article.dataset.pinned = String(note.pinned);
+    article.classList.toggle("is-pinned", note.pinned);
 
     if (editingNoteId === note.id) {
       article.classList.add("is-editing");
@@ -201,7 +211,15 @@
 
     const actions = document.createElement("div");
     actions.className = "note-actions";
+    const pinButton = createButton(
+      note.pinned ? "Unpin note" : "Pin note",
+      "pin-button",
+      "pin",
+      note.id,
+    );
+    pinButton.setAttribute("aria-pressed", String(note.pinned));
     actions.append(
+      pinButton,
       createButton("Edit", "edit-button", "edit", note.id),
       createButton("Delete", "delete-button", "delete", note.id),
     );
@@ -213,7 +231,11 @@
 
   /** @param {RenderOptions} [options] */
   function renderNotes(options = {}) {
-    notesList.replaceChildren(...notes.map(renderNote));
+    const orderedNotes = [...notes].sort((firstNote, secondNote) => {
+      if (firstNote.pinned !== secondNote.pinned) return firstNote.pinned ? -1 : 1;
+      return secondNote.createdAt - firstNote.createdAt;
+    });
+    notesList.replaceChildren(...orderedNotes.map(renderNote));
 
     const hasNotes = notes.length > 0;
     emptyState.hidden = hasNotes;
@@ -262,6 +284,7 @@
       text,
       createdAt: timestamp,
       updatedAt: timestamp,
+      pinned: false,
     };
 
     notes = [newNote, ...notes];
@@ -315,9 +338,24 @@
   }
 
   /** @param {string} noteId */
+  function togglePin(noteId) {
+    const note = notes.find((candidate) => candidate.id === noteId);
+    if (!note) return;
+
+    notes = notes.map((candidate) =>
+      candidate.id === noteId ? { ...candidate, pinned: !candidate.pinned } : candidate,
+    );
+    saveNotes();
+    renderNotes();
+    showStatus(note.pinned ? "Note unpinned." : "Note pinned.");
+  }
+
+  /** @param {string} noteId */
   function deleteNote(noteId) {
-    const noteIndex = notes.findIndex((note) => note.id === noteId);
-    if (noteIndex === -1) return;
+    const renderedNoteIndex = Array.from(notesList.querySelectorAll(".note-card")).findIndex(
+      (card) => /** @type {HTMLElement} */ (card).dataset.noteId === noteId,
+    );
+    if (renderedNoteIndex === -1) return;
 
     notes = notes.filter((note) => note.id !== noteId);
     if (editingNoteId === noteId) editingNoteId = null;
@@ -327,7 +365,7 @@
 
     const nextFocusTarget = /** @type {HTMLElement | null} */ (
       notesList.querySelector(
-        `.note-card:nth-child(${Math.min(noteIndex + 1, notes.length)}) .edit-button`,
+        `.note-card:nth-child(${Math.min(renderedNoteIndex + 1, notes.length)}) .edit-button`,
       )
     );
     if (nextFocusTarget) nextFocusTarget.focus();
@@ -354,6 +392,7 @@
     if (action === "cancel") cancelEditing();
     if (action === "save") saveEdit(noteId);
     if (action === "delete") deleteNote(noteId);
+    if (action === "pin") togglePin(noteId);
   });
 
   notesList.addEventListener("keydown", (event) => {
