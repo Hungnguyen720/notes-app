@@ -277,3 +277,100 @@ test("deleting works for pinned and unpinned notes", () => {
     dom.window.close();
   }
 });
+
+test("search filters note text live and case-insensitively", () => {
+  const dom = bootApp(
+    JSON.stringify([
+      storedNote({ id: "first", text: "Plan the Roadmap", createdAt: 100 }),
+      storedNote({ id: "second", text: "Buy groceries", createdAt: 200 }),
+      storedNote({ id: "third", text: "Road bike maintenance", createdAt: 300 }),
+    ]),
+  );
+
+  try {
+    const { document, Event } = dom.window;
+    const search = document.querySelector("#note-search");
+
+    assert.equal(search.labels[0].textContent, "Search notes");
+    search.value = "ROAD";
+    search.dispatchEvent(new Event("input", { bubbles: true }));
+
+    assert.deepEqual(cardTexts(document), ["Road bike maintenance", "Plan the Roadmap"]);
+    assert.equal(document.querySelector("#notes-summary").textContent, "2 of 3 notes");
+  } finally {
+    dom.window.close();
+  }
+});
+
+test("clearing search restores all notes in canonical order", () => {
+  const dom = bootApp(
+    JSON.stringify([
+      storedNote({ id: "unpinned-new", text: "Unpinned new", createdAt: 400, pinned: false }),
+      storedNote({ id: "pinned-old", text: "Pinned old", createdAt: 100, pinned: true }),
+      storedNote({ id: "unpinned-old", text: "Unpinned old", createdAt: 200, pinned: false }),
+    ]),
+  );
+
+  try {
+    const { document, Event } = dom.window;
+    const search = document.querySelector("#note-search");
+    search.value = "pinned old";
+    search.dispatchEvent(new Event("input", { bubbles: true }));
+    assert.deepEqual(cardTexts(document), ["Pinned old", "Unpinned old"]);
+
+    search.value = "";
+    search.dispatchEvent(new Event("input", { bubbles: true }));
+    assert.deepEqual(cardTexts(document), ["Pinned old", "Unpinned new", "Unpinned old"]);
+    assert.equal(document.querySelector("#notes-summary").textContent, "3 notes, saved locally");
+  } finally {
+    dom.window.close();
+  }
+});
+
+test("an unmatched search displays a clear no-matches state", () => {
+  const dom = bootApp(
+    JSON.stringify([storedNote({ id: "note", text: "Existing note", createdAt: 100 })]),
+  );
+
+  try {
+    const { document, Event } = dom.window;
+    const search = document.querySelector("#note-search");
+    search.value = "absent";
+    search.dispatchEvent(new Event("input", { bubbles: true }));
+
+    assert.deepEqual(cardTexts(document), []);
+    assert.equal(document.querySelector("#no-matches-state").hidden, false);
+    assert.equal(
+      document.querySelector("#no-matches-state h3").textContent,
+      "No matching notes",
+    );
+    assert.equal(document.querySelector("#empty-state").hidden, true);
+  } finally {
+    dom.window.close();
+  }
+});
+
+test("search does not mutate note data, ordering, pin state, or local storage", () => {
+  const originalNotes = [
+    storedNote({ id: "first", text: "Alpha note", createdAt: 100, pinned: false }),
+    storedNote({ id: "second", text: "Beta note", createdAt: 200, pinned: true }),
+  ];
+  const serializedNotes = JSON.stringify(originalNotes);
+  const dom = bootApp(serializedNotes);
+
+  try {
+    const { document, Event } = dom.window;
+    const search = document.querySelector("#note-search");
+    search.value = "alpha";
+    search.dispatchEvent(new Event("input", { bubbles: true }));
+    search.value = "";
+    search.dispatchEvent(new Event("input", { bubbles: true }));
+
+    assert.deepEqual(cardTexts(document), ["Beta note", "Alpha note"]);
+    assert.equal(findCard(document, "second").dataset.pinned, "true");
+    assert.equal(dom.window.localStorage.getItem(storageKey), serializedNotes);
+    assert.deepEqual(JSON.parse(dom.window.localStorage.getItem(storageKey)), originalNotes);
+  } finally {
+    dom.window.close();
+  }
+});

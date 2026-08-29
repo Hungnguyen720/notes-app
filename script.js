@@ -31,6 +31,12 @@
   const notesList = /** @type {HTMLElement} */ (document.querySelector("#notes-list"));
   const emptyState = /** @type {HTMLElement} */ (document.querySelector("#empty-state"));
   const notesSummary = /** @type {HTMLElement} */ (document.querySelector("#notes-summary"));
+  const searchInput = /** @type {HTMLInputElement} */ (
+    document.querySelector("#note-search")
+  );
+  const noMatchesState = /** @type {HTMLElement} */ (
+    document.querySelector("#no-matches-state")
+  );
   const statusMessage = /** @type {HTMLElement} */ (
     document.querySelector("#status-message")
   );
@@ -235,13 +241,21 @@
       if (firstNote.pinned !== secondNote.pinned) return firstNote.pinned ? -1 : 1;
       return secondNote.createdAt - firstNote.createdAt;
     });
-    notesList.replaceChildren(...orderedNotes.map(renderNote));
+    const query = searchInput.value.trim().toLocaleLowerCase();
+    const displayedNotes = query
+      ? orderedNotes.filter((note) => note.text.toLocaleLowerCase().includes(query))
+      : orderedNotes;
+    notesList.replaceChildren(...displayedNotes.map(renderNote));
 
     const hasNotes = notes.length > 0;
+    const hasMatches = displayedNotes.length > 0;
     emptyState.hidden = hasNotes;
-    notesSummary.textContent = hasNotes
-      ? `${notes.length} ${notes.length === 1 ? "note" : "notes"}, saved locally`
-      : "Nothing here yet";
+    noMatchesState.hidden = !hasNotes || !query || hasMatches;
+    notesSummary.textContent = !hasNotes
+      ? "Nothing here yet"
+      : query
+        ? `${displayedNotes.length} of ${notes.length} ${notes.length === 1 ? "note" : "notes"}`
+        : `${notes.length} ${notes.length === 1 ? "note" : "notes"}, saved locally`;
 
     if (editingNoteId) {
       const editInput = /** @type {HTMLTextAreaElement | undefined} */ (
@@ -377,6 +391,7 @@
   });
 
   input.addEventListener("input", updateComposerState);
+  searchInput.addEventListener("input", () => renderNotes());
 
   notesList.addEventListener("click", (event) => {
     const target = /** @type {Element | null} */ (event.target);
